@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  backend-goipay_db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: goipay_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d goipay_db" ]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5433:5432"
+  backend-goipay_db_migrations:
+    image: ghcr.io/kukymbr/goose-docker:3.21.1
+    environment:
+      - GOOSE_DRIVER=postgres
+      - GOOSE_DBSTRING=host=backend-goipay_db port=5432 user=postgres password=postgres dbname=goipay_db
+    volumes:
+      - ./salmon-donate-backend/external/goipay/sql/migrations:/migrations
+    depends_on:
+      backend-goipay_db:
+        condition: service_healthy
+  backend-goipay:
+    image: chekist32/goipay:v0.3.0
+    environment:
+      - MODE=dev
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=3000
+      - DATABASE_HOST=backend-goipay_db
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASS=postgres
+      - DATABASE_NAME=goipay_db
+      - XMR_DAEMON_URL=http://node.monerodevs.org:38089
+      - XMR_DAEMON_USER=
+      - XMR_DAEMON_PASS=
+    depends_on:
+      - backend-goipay_db_migrations
+    ports:
+      - "3000:3000"
+
+  backend-backend_db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: salmon_donate_backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d salmon_donate_backend" ]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5434:5432"
+
+  backend-migrations_backend_db:
+    image: liquibase/liquibase
+    volumes:
+      - ./salmon-donate-backend/src/main/resources/db:/liquibase/changelog
+    command: liquibase --driver=org.postgresql.Driver --url='jdbc:postgresql://backend-backend_db:5432/salmon_donate_backend' --changeLogFile=./changelog/migrations-master.yml --username=postgres --password=postgres update
+    depends_on:
+      backend-backend_db:
+        condition: service_healthy
+
+  backend-minio:
+    image: quay.io/minio/minio:RELEASE.2024-10-02T17-50-41Z
+    environment:
+        - MINIO_ROOT_USER=admin
+        - MINIO_ROOT_PASSWORD=adminadmin
+    ports:
+        - '9000:9000'
+        - '9001:9001'
+    volumes:
+        - ./docker_data/minio:/data
+    command: server /data --console-address ":9001"
+          
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend-maildev:
+    image: maildev/maildev:2.1.0
+    ports:
+      - "1080:1080"
+
+  backend-keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    ports:
+      - "9080:8080"
+      - "9081:9000"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_FEATURES: update-email
+      KC_HEALTH_ENABLED: true
+    volumes:
+      - ./salmon-donate-backend/keycloak/providers:/opt/keycloak/providers
+      - ./salmon-donate-backend/keycloak/realms:/opt/keycloak/data/import
+    command: start-dev --import-realm
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - backend-maildev
+
+  backend-quarkus:
+    build:
+      context: ./salmon-donate-backend
+      dockerfile: ./src/main/docker/Dockerfile.native-micro
+    environment:
+      - QUARKUS_LOG_LEVEL=DEBUG
+    env_file:
+      - ./.env.backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend-migrations_backend_db:
+        condition: service_completed_successfully
+      backend-goipay:
+        condition: service_started
+      backend-keycloak:
+        condition: service_healthy
+    
+
+  # FRONTEND
+  
+  frontend-valkey:
+    image: valkey/valkey:8-alpine3.20
+    ports:
+        - '6380:6379'
+    command: valkey-server
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
+
+  frontend-nodejs:
+    build: ./salmon-donate-frontend-nextjs
+    env_file:
+      - ./.env.frontend
+    ports:
+      - '3001:3000'
+    depends_on:
+      frontend-valkey:
+        condition: service_healthy
+      backend-quarkus:
+        condition: service_started

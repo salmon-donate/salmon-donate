@@ -1,0 +1,6 @@
+[submodule "salmon-donate-backend"]
+	path = salmon-donate-backend
+	url = https://github.com/salmon-donate/salmon-donate-backend.git
+[submodule "salmon-donate-frontend"]
+	path = salmon-donate-frontend
+	url = https://github.com/salmon-donate/salmon-donate-frontend.git

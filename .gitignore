@@ -1,0 +1,4 @@
+docker_data
+.env*
+
+!*.example
