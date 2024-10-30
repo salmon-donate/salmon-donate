@@ -1,6 +1,8 @@
 [submodule "salmon-donate-backend"]
 	path = salmon-donate-backend
 	url = https://github.com/salmon-donate/salmon-donate-backend.git
+	branch = v0.1.0
 [submodule "salmon-donate-frontend"]
 	path = salmon-donate-frontend
 	url = https://github.com/salmon-donate/salmon-donate-frontend.git
+	branch = v0.1.0
