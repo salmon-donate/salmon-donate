@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: postgres
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d goipay_db" ]
-      interval: 2s
+      interval: 10s
       timeout: 5s
       retries: 5
     ports:
@@ -52,7 +52,7 @@ services:
       POSTGRES_PASSWORD: postgres
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d salmon_donate_backend" ]
-      interval: 2s
+      interval: 10s
       timeout: 5s
       retries: 5
     ports:
@@ -80,7 +80,7 @@ services:
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -105,7 +105,7 @@ services:
     command: start-dev --import-realm
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 10
     depends_on:
@@ -139,7 +139,7 @@ services:
     command: valkey-server
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 2s
+      interval: 10s
       timeout: 3s
       retries: 5
 
