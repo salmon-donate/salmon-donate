@@ -14,8 +14,9 @@ services:
       retries: 5
     ports:
       - "5433:5432"
+
   backend-goipay_db_migrations:
-    image: ghcr.io/kukymbr/goose-docker:3.21.1
+    image: chekist32/goose-docker
     environment:
       - GOOSE_DRIVER=postgres
       - GOOSE_DBSTRING=host=backend-goipay_db port=5432 user=postgres password=postgres dbname=goipay_db
@@ -24,6 +25,7 @@ services:
     depends_on:
       backend-goipay_db:
         condition: service_healthy
+  
   backend-goipay:
     image: chekist32/goipay:v0.4.0
     environment:
