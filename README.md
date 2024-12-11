@@ -58,3 +58,8 @@ docker compose up
     - Access Secret: `miniosecret`
     ![image](https://github.com/user-attachments/assets/e8637539-9d3d-49ff-9336-e31a67826daf)
 
+## Showcase
+https://github.com/user-attachments/assets/df4d8735-d563-4c2b-9e44-d722a3ff7bae
+
+
+
