@@ -115,7 +115,7 @@ services:
       - backend-maildev
 
   backend-quarkus:
-    image: chekist32/salmon-donate-backend:graalvm-v0.1.1
+    image: chekist32/salmon-donate-backend:graalvm-v0.1.2
     environment:
       - QUARKUS_LOG_LEVEL=DEBUG
     env_file:
