@@ -10,8 +10,6 @@
 - Docker, Docker Compose
 
 ### Instalation
-> **Note:** For the ARM64 architecture, you should build the Quarkus backend manually.
-
 This section describes how to deploy the project for development and testing purposes, without a detailed explanation of potential caveats for production setup, just the bare minimum.
 
 - Clone the repo
