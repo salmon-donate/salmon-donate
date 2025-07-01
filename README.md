@@ -5,7 +5,7 @@
 </div>
 
 ## Showcase
-https://github.com/user-attachments/assets/df4d8735-d563-4c2b-9e44-d722a3ff7bae
+https://github.com/user-attachments/assets/e6351d8f-6cf0-4b41-bf85-c39039666c11
 
 ## Getting Started
 
